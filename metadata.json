@@ -1,0 +1,8 @@
+{
+  "name": "Copy of AutoPy Architect",
+  "description": "A high-end automation generator that designs, writes, and documents production-ready Python automation systems using Gemini AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
