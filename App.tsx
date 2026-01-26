@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AUTOMATION_TEMPLATES } from './constants';
 import { AutomationCategory, GeneratedSystem } from './types';
 import { generateAutomation } from './services/geminiService';
@@ -9,6 +8,7 @@ const App: React.FC = () => {
   const [customPrompt, setCustomPrompt] = useState('');
   const [result, setResult] = useState<GeneratedSystem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'code' | 'instructions'>('code');
 
   const handleGenerate = async (prompt: string, category?: AutomationCategory) => {
     setLoading(true);
@@ -16,6 +16,7 @@ const App: React.FC = () => {
     try {
       const system = await generateAutomation(prompt, category || AutomationCategory.CUSTOM);
       setResult(system);
+      setActiveTab('code');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
@@ -25,174 +26,212 @@ const App: React.FC = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('Pinned to your clipboard! 📌');
   };
 
   return (
-    <div className="min-h-screen pb-20 px-6 pt-12 max-w-6xl mx-auto selection:bg-[#f2cc8f]">
-      {/* Hand-drawn style Header */}
-      <header className="relative mb-20 flex flex-col items-center">
-        <div className="absolute -top-6 -left-4 w-24 h-24 opacity-20 pointer-events-none">
-          <svg viewBox="0 0 100 100" className="fill-[#e07a5f]">
-            <path d="M20,50 Q30,20 50,20 T80,50 T50,80 T20,50" />
-          </svg>
+    <div className="flex h-screen bg-[#020617] text-slate-200">
+      {/* Sidebar Navigation */}
+      <aside className="w-72 flex-shrink-0 glass border-r border-white/5 flex flex-col">
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center text-white font-bold">P</div>
+            <h1 className="text-xl font-bold tracking-tight text-white">Studio <span className="font-light opacity-50 italic serif text-sm tracking-normal">Pro</span></h1>
+          </div>
+          
+          <nav className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 px-2">Blueprints</p>
+            {AUTOMATION_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                onClick={() => handleGenerate(tpl.description, tpl.category)}
+                disabled={loading}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+              >
+                <span className="text-lg opacity-60 group-hover:opacity-100">{tpl.icon}</span>
+                <span className="truncate">{tpl.name}</span>
+              </button>
+            ))}
+          </nav>
         </div>
         
-        <h1 className="serif text-6xl font-bold mb-4 text-[#3d405b] relative">
-          The Python Studio
-          <span className="absolute -right-12 bottom-0 hand text-2xl text-[#e07a5f] rotate-12 underline decoration-wavy">
-            & Automation
-          </span>
-        </h1>
-        <p className="hand text-2xl text-slate-500 max-w-xl text-center leading-relaxed">
-          Where we sketch ideas into logic. Describe your workflow below, and let's build something useful together.
-        </p>
-      </header>
+        <div className="mt-auto p-6 border-t border-white/5 bg-white/[0.02]">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+            <p className="text-xs font-semibold text-indigo-300 mb-1">Expert Mode</p>
+            <p className="text-[10px] text-slate-400 leading-relaxed">Precision-engineered Python automation logic for production systems.</p>
+          </div>
+        </div>
+      </aside>
 
-      <div className="flex flex-col md:flex-row gap-12 items-start">
-        {/* Creator's Desk (Inputs) */}
-        <div className="w-full md:w-2/5 space-y-12 sticky top-8">
-          <section className="relative">
-            <div className="absolute inset-0 bg-[#e07a5f]/5 sketch-border -m-2 -rotate-1 pointer-events-none"></div>
-            <div className="bg-white p-8 paper-card rounded-sm relative">
-              <h2 className="serif text-2xl font-bold mb-6 flex items-center gap-3">
-                <span className="text-[#e07a5f] italic">01.</span> Start a Project
-              </h2>
+      {/* Main Workbench */}
+      <main className="flex-1 flex flex-col overflow-hidden bg-gradient-to-tr from-[#020617] via-[#020617] to-[#0f172a]">
+        {/* Top Header */}
+        <header className="h-20 flex-shrink-0 flex items-center justify-between px-10 border-b border-white/5 backdrop-blur-md sticky top-0 z-20">
+          <div>
+            <h2 className="text-sm font-medium text-slate-400">Project Workspace</h2>
+            <p className="text-xs text-slate-600 font-mono tracking-tighter">STUDIO_ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex -space-x-2">
+              <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-indigo-500 flex items-center justify-center text-[10px] font-bold">AI</div>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+          {/* Hero Section */}
+          {!result && !loading && (
+            <div className="max-w-3xl animate-slide-up">
+              <h1 className="text-6xl font-bold tracking-tight gradient-text mb-6">
+                Forge Logic <br />
+                <span className="italic serif text-5xl font-light opacity-80">With Precision.</span>
+              </h1>
+              <p className="text-lg text-slate-400 leading-relaxed mb-10 max-w-xl">
+                Describe your operational bottleneck or automation goal. Our studio architect will design a professional-grade Python solution tailored to your requirements.
+              </p>
+            </div>
+          )}
+
+          {/* Input Section */}
+          <div className="max-w-4xl relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-10 group-focus-within:opacity-20 transition duration-1000"></div>
+            <div className="relative glass rounded-2xl p-6 transition-all duration-300">
               <textarea
-                className="w-full bg-[#fdfbf7] border-2 border-[#3d405b]/10 focus:border-[#e07a5f] rounded-lg p-5 text-[#3d405b] transition-all outline-none resize-none h-40 hand text-xl"
-                placeholder="Ex: I want to save every cat photo I find on a specific blog into a 'Cute' folder..."
+                className="w-full bg-transparent text-xl font-medium text-white placeholder-slate-600 border-none focus:ring-0 resize-none h-32 custom-scrollbar"
+                placeholder="Briefly describe the automation you wish to build..."
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
               />
-              <button
-                onClick={() => handleGenerate(customPrompt)}
-                disabled={loading || !customPrompt.trim()}
-                className="w-full mt-6 bg-[#3d405b] text-white hover:bg-[#2d2f44] disabled:opacity-50 py-4 rounded-md font-bold text-lg shadow-xl shadow-[#3d405b]/10 transform active:scale-[0.98]"
-              >
-                {loading ? 'Doodling the logic...' : 'Craft System'}
-              </button>
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <h2 className="serif text-xl font-bold text-[#3d405b] px-2 flex items-center gap-2">
-              <span className="text-[#81b29a] italic">02.</span> Reference Blueprints
-            </h2>
-            <div className="flex flex-wrap gap-4">
-              {AUTOMATION_TEMPLATES.map((tpl, i) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => handleGenerate(tpl.description, tpl.category)}
-                  disabled={loading}
-                  className={`group p-5 bg-white paper-card border-2 border-[#3d405b]/5 rounded-sm transition-all text-left flex-1 min-w-[200px] ${i % 2 === 0 ? 'tilted-left' : 'tilted-right'}`}
-                >
-                  <div className="text-3xl mb-2 opacity-80 group-hover:scale-110 transition-transform inline-block">{tpl.icon}</div>
-                  <h3 className="font-bold text-[#3d405b] mb-1">{tpl.name}</h3>
-                  <p className="text-xs text-slate-400 line-clamp-2 italic">{tpl.description}</p>
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* The Drafting Table (Output) */}
-        <div className="w-full md:w-3/5">
-          {loading ? (
-            <div className="h-[600px] flex flex-col items-center justify-center bg-white/50 sketch-border border-dashed border-[#3d405b]/20">
-              <div className="relative w-20 h-20 mb-6">
-                <div className="absolute inset-0 border-4 border-[#e07a5f] border-t-transparent rounded-full animate-spin"></div>
-                <div className="absolute inset-2 border-4 border-[#81b29a] border-b-transparent rounded-full animate-spin [animation-duration:1.5s]"></div>
-              </div>
-              <p className="hand text-2xl text-slate-500 animate-pulse">Sharpening the pencils...</p>
-            </div>
-          ) : result ? (
-            <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-700">
-              <div className="bg-white p-10 paper-card sketch-border relative">
-                {/* Decorative Elements */}
-                <div className="absolute -top-4 -right-4 bg-[#f2cc8f] p-2 rotate-12 shadow-sm text-xs font-bold uppercase tracking-widest text-[#3d405b] border border-[#3d405b]/10">
-                  Approved
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
+                  <span>GPT-READY</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                  <span>PYTHON 3.10+</span>
                 </div>
+                <button
+                  onClick={() => handleGenerate(customPrompt)}
+                  disabled={loading || !customPrompt.trim()}
+                  className="px-6 py-2.5 accent-gradient text-white rounded-lg text-sm font-bold tracking-tight hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] disabled:opacity-50 active:scale-95 transition-all flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Generate Blueprint</span>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
 
-                <div className="mb-10">
-                  <div className="flex flex-wrap justify-between items-end gap-4 border-b-2 border-dotted border-[#3d405b]/10 pb-6">
-                    <div>
-                      <span className="hand text-lg text-[#81b29a] block mb-1">
-                        Category: {result.category}
-                      </span>
-                      <h2 className="serif text-4xl font-bold text-[#3d405b]">{result.title}</h2>
+          {/* Error Message */}
+          {error && (
+            <div className="max-w-4xl p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-3">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Result Console */}
+          {result && !loading && (
+            <div className="max-w-6xl animate-slide-up space-y-8 pb-20">
+              <div className="flex flex-col lg:flex-row gap-8 items-start">
+                {/* Information Card */}
+                <div className="w-full lg:w-1/3 glass rounded-2xl p-8 border border-white/10 flex flex-col gap-6">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2 block">System Profile</span>
+                    <h3 className="text-3xl font-bold text-white tracking-tight">{result.title}</h3>
+                  </div>
+                  
+                  <p className="text-sm text-slate-400 leading-relaxed italic border-l-2 border-indigo-500/30 pl-4">
+                    {result.description}
+                  </p>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-500 font-medium">Category</span>
+                      <span className="px-2 py-1 bg-white/5 rounded-md text-slate-300 border border-white/5 uppercase tracking-tighter text-[10px]">{result.category}</span>
                     </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-slate-500 font-medium block">Core Dependencies</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {result.dependencies.map((dep, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 rounded text-[10px] font-mono">{dep}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-6 border-t border-white/5">
                     <button 
-                      onClick={() => copyToClipboard(result.pythonCode)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#fdfbf7] border border-[#3d405b]/10 rounded hover:bg-[#f2cc8f] transition-colors text-sm font-semibold"
+                      onClick={() => copyToClipboard(`pip install ${result.dependencies.join(' ')}`)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-mono text-slate-400 transition-colors"
                     >
-                      <span>Grab Code</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
+                      <span>$ pip install...</span>
+                      <svg className="w-4 h-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                     </button>
                   </div>
-                  <p className="mt-6 text-lg text-slate-600 leading-relaxed italic italic-font serif">{result.description}</p>
                 </div>
 
-                <div className="mb-10 p-6 bg-[#fdfbf7] border-l-4 border-[#e07a5f] rounded-r-lg">
-                  <h3 className="hand text-xl font-bold text-[#3d405b] mb-3">Tools of the Trade (Dependencies)</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {result.dependencies.map((dep, i) => (
-                      <span key={i} className="px-3 py-1 bg-white border border-[#3d405b]/10 rounded shadow-sm text-[#3d405b] text-sm code-font">
-                        {dep}
-                      </span>
-                    ))}
+                {/* Console Output */}
+                <div className="w-full lg:w-2/3 glass rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                  {/* Console Tabs */}
+                  <div className="flex items-center px-6 border-b border-white/5 bg-slate-900/40">
+                    <button 
+                      onClick={() => setActiveTab('code')}
+                      className={`px-4 py-4 text-xs font-bold tracking-widest uppercase transition-all border-b-2 ${activeTab === 'code' ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      source.py
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('instructions')}
+                      className={`px-4 py-4 text-xs font-bold tracking-widest uppercase transition-all border-b-2 ${activeTab === 'instructions' ? 'border-indigo-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      deployment.md
+                    </button>
+                    <div className="ml-auto flex items-center gap-3">
+                      <div className="flex gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-slate-700"></div>
+                        <div className="w-2 h-2 rounded-full bg-slate-700"></div>
+                        <div className="w-2 h-2 rounded-full bg-slate-700"></div>
+                      </div>
+                      <button 
+                        onClick={() => copyToClipboard(activeTab === 'code' ? result.pythonCode : result.setupInstructions + "\n\n" + result.deploymentGuide)}
+                        className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                      </button>
+                    </div>
                   </div>
-                  <div className="mt-4 bg-[#3d405b]/5 p-3 rounded text-xs code-font text-slate-500 overflow-x-auto">
-                    $ pip install {result.dependencies.join(' ')}
-                  </div>
-                </div>
 
-                <div className="mb-10">
-                  <h3 className="serif text-xl font-bold text-[#3d405b] mb-4">Python Script</h3>
-                  <div className="relative">
-                    <pre className="bg-[#3d405b] p-8 rounded-lg overflow-x-auto shadow-inner text-sm leading-relaxed code-font">
-                      <code className="text-[#f2cc8f]">{result.pythonCode}</code>
-                    </pre>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-dotted border-[#3d405b]/20">
-                  <div className="space-y-3">
-                    <h3 className="hand text-2xl font-bold text-[#e07a5f]">Studio Setup</h3>
-                    <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed serif">{result.setupInstructions}</div>
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="hand text-2xl font-bold text-[#81b29a]">Launch Protocol</h3>
-                    <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed serif">{result.deploymentGuide}</div>
+                  {/* Code Block */}
+                  <div className="bg-[#020617] p-8 overflow-x-auto custom-scrollbar max-h-[600px]">
+                    {activeTab === 'code' ? (
+                      <pre className="code-font text-sm leading-relaxed"><code className="text-indigo-300">{result.pythonCode}</code></pre>
+                    ) : (
+                      <div className="space-y-8 py-4">
+                        <section>
+                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Setup Environment</h4>
+                          <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">{result.setupInstructions}</div>
+                        </section>
+                        <section>
+                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Deployment Guide</h4>
+                          <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">{result.deploymentGuide}</div>
+                        </section>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="h-[600px] flex flex-col items-center justify-center bg-[#3d405b]/5 sketch-border border-dashed border-[#3d405b]/10 text-slate-400 p-10 text-center">
-              <div className="w-24 h-24 mb-6 opacity-20">
-                <svg fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25M20.71,7.04C21.1,6.65 21.1,6.02 20.71,5.63L18.37,3.29C17.98,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04Z" />
-                </svg>
-              </div>
-              <p className="serif text-xl italic mb-2">The table is clear.</p>
-              <p className="hand text-lg">Pick a blueprint or write an idea to begin your next automation project.</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-8 p-6 bg-red-50 border-2 border-red-200 rounded-lg text-red-800 flex items-center gap-4 animate-bounce">
-              <span className="text-3xl">📝</span>
-              <p className="hand text-xl">Oops, the ink spilled! {error}</p>
             </div>
           )}
         </div>
-      </div>
-
-      <footer className="mt-24 text-center pb-12 opacity-40">
-        <p className="hand text-xl">Made with curiosity and a bit of Python ink.</p>
-      </footer>
+      </main>
     </div>
   );
 };
