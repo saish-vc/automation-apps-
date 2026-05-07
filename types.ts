@@ -5,7 +5,10 @@ export enum AutomationCategory {
   FILE_MANAGEMENT = 'File Management',
   DATA_ANALYSIS = 'Data Analysis',
   SYSTEM_UTILITY = 'System Utility',
-  CUSTOM = 'Custom'
+  CUSTOM = 'Custom',
+  HTTP = 'HTTP Request',
+  DATABASE = 'Database',
+  EMAIL = 'Email'
 }
 
 export interface GeneratedSystem {
@@ -18,10 +21,21 @@ export interface GeneratedSystem {
   deploymentGuide: string;
 }
 
-export interface AutomationTemplate {
-  id: string;
-  name: string;
-  description: string;
+export interface WorkflowNodeData {
+  label: string;
   category: AutomationCategory;
-  icon: string;
+  config: Record<string, any>;
+  status: 'ready' | 'running' | 'success' | 'failed';
+}
+
+export interface AppState {
+  activeTab: 'dashboard' | 'workflows' | 'history' | 'analytics' | 'settings';
+  isDarkMode: boolean;
+  workflows: any[];
+  stats: {
+    total: number;
+    success: number;
+    failed: number;
+    avgRuntime: string;
+  };
 }

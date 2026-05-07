@@ -1,8 +1,9 @@
 {
-  "name": "The Python Studio",
-  "description": "An organic, human-centric automation generator that designs production-ready Python workflows with a handmade touch.",
+  "name": "Automation Studio",
+  "description": "Enterprise-grade Python automation workflow suite with real-time performance analytics and node-based design.",
   "requestFramePermissions": [
     "camera",
     "microphone"
-  ]
+  ],
+  "majorCapabilities": []
 }

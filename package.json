@@ -9,9 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.38.0",
+    "@tailwindcss/vite": "^4.2.4",
+    "@xyflow/react": "^12.10.2",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.14.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "@google/genai": "^1.38.0"
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
